@@ -57,7 +57,7 @@
             </Row>
             
             <Row type="flex">
-              <FormItem label="查詢參數[QueryParameters]" prop="queryParameters">
+              <FormItem label="查询参数[QueryParameters]" prop="queryParameters">
                 <div class="flex flex-col">
                   <div v-for="(item, index) in formData.match.queryParameters" :key="index" class="flex col-center margin-bottom-16 IP-row">
                     <Select v-model="item.mode" placeholder="请选择模式" transfer clearable>
@@ -66,10 +66,10 @@
                     <Input v-model.trim="item.name" placeholder="请输入name" />
                     <Input v-model.trim="item.values" placeholder="请输入values" style="width:350px;" />
                     <Checkbox v-model="item.isCaseSensitive">是否区分大小写</Checkbox>
-                    <div class="flex col-center row-center icon" @click="handleDeleteKeyValue('match', 'headers', index)" v-if="formData.match.headers && formData.match.headers.length > 1">
+                    <div class="flex col-center row-center icon" @click="handleDeleteKeyValue('match', 'queryParameters', index)" v-if="formData.match.queryParameters && formData.match.queryParameters.length > 1">
                       <img src="~@/assets/images/gateWay/delete.png" alt="">
                     </div>
-                    <div class="flex col-center row-center icon" @click="handleAddKeyValue(formData.match.headers, 'headers')" v-if="formData.match.headers.length == index + 1">
+                    <div class="flex col-center row-center icon" @click="handleAddKeyValue(formData.match.queryParameters, 'queryParameters')" v-if="formData.match.queryParameters.length == index + 1">
                       <img src="~@/assets/images/gateWay/add.png" alt="">
                     </div>
                   </div>
@@ -364,6 +364,13 @@ export default {
               if (formData.match.methods) {
                 formData.match.methods = formData.match.methods.join(",");
               }
+              _.remove(formData.match.queryParameters || [], item => {
+                item.mode = Number(item.mode);
+                return !(item.name && item.values && (item.mode || item.mode == 0));
+              });
+              if (!formData.match.queryParameters.length) {
+                formData.match.queryParameters = null;
+              }
               _.remove(formData.match.headers || [], item => {
                 item.mode = Number(item.mode);
                 return !(item.name && item.values && (item.mode || item.mode == 0));
@@ -417,7 +424,16 @@ export default {
       }
     },
     handleAddKeyValue(list, key) {
-      if (key == "headers") {
+      if (key == "queryParameters") {
+        list.push({
+          // id: 0,
+          name: "",
+          values: "",
+          mode: null,
+          isCaseSensitive: false
+          // proxyMatchId: 0
+        });
+      } else if (key == "headers") {
         list.push({
           // id: 0,
           name: "",
