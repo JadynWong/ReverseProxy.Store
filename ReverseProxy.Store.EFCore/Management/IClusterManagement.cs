@@ -11,8 +11,8 @@ namespace ReverseProxy.Store.EFCore.Management
     {
         IQueryable<Cluster> GetAll();
         Task<Cluster> Find(string id);
-        Task<bool> Create(Cluster proxyRoute);
-        Task<bool> Update(Cluster proxyRoute);
+        Task<bool> Create(Cluster cluster);
+        Task<bool> Update(Cluster cluster);
         Task<bool> Delete(string id);
     }
 }

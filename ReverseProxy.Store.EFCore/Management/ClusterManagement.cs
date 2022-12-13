@@ -78,38 +78,59 @@ namespace ReverseProxy.Store.EFCore.Management
 
         public async Task<bool> Update(Cluster cluster)
         {
-            var dbCluster = await DbContext.Set<Cluster>()
-                   .Include(c => c.Metadata)
-                   .Include(c => c.Destinations)
-                   .Include(c => c.SessionAffinity).ThenInclude(s => s.Cookie)
-                   .Include(c => c.HttpRequest)
-                   .Include(c => c.HttpClient)
-                   .Include(c => c.HealthCheck).ThenInclude(h => h.Active)
-                   .Include(c => c.HealthCheck).ThenInclude(h => h.Passive)
-                   .FirstAsync(c => c.Id == cluster.Id);
+            var dbCluster = await GetCluster(cluster.Id);
             using (var tran = DbContext.Database.BeginTransaction())
             {
                 try
                 {
-
                     if (dbCluster.HealthCheck != null)
+                    {
+                        if (dbCluster.HealthCheck.Active != null)
+                        {
+                            DbContext.Remove(dbCluster.HealthCheck.Active);
+                        }
+                        if (dbCluster.HealthCheck.Passive != null)
+                        {
+                            DbContext.Remove(dbCluster.HealthCheck.Passive);
+                        }
                         DbContext.Remove(dbCluster.HealthCheck);
+                    }
                     if (dbCluster.Destinations != null)
+                    {
                         DbContext.RemoveRange(dbCluster.Destinations);
+                    }
                     if (dbCluster.HttpClient != null)
+                    {
                         DbContext.Remove(dbCluster.HttpClient);
+                    }
                     if (dbCluster.HttpRequest != null)
+                    {
                         DbContext.Remove(dbCluster.HttpRequest);
+                    }
                     if (dbCluster.SessionAffinity != null)
+                    {
+                        if (dbCluster.SessionAffinity.Cookie != null)
+                        {
+                            DbContext.Remove(dbCluster.SessionAffinity.Cookie);
+                        }
                         DbContext.Remove(dbCluster.SessionAffinity);
+                    }
                     if (dbCluster.Metadata != null)
+                    {
                         DbContext.RemoveRange(dbCluster.Metadata);
+                    }
 
                     await DbContext.SaveChangesAsync();
+
+                    dbCluster = await GetCluster(cluster.Id);
 
                     if (cluster.HealthCheck != null)
                     {
                         cluster.HealthCheck.Id = 0;
+                        if (cluster.HealthCheck.Active != null)
+                            cluster.HealthCheck.Active.Id = 0;
+                        if (cluster.HealthCheck.Passive != null)
+                            cluster.HealthCheck.Passive.Id = 0;
                         dbCluster.HealthCheck = cluster.HealthCheck;
                     }
                     if (cluster.Destinations != null)
@@ -130,6 +151,10 @@ namespace ReverseProxy.Store.EFCore.Management
                     if (cluster.SessionAffinity != null)
                     {
                         cluster.SessionAffinity.Id = 0;
+                        if (cluster.SessionAffinity.Cookie != null)
+                        {
+                            cluster.SessionAffinity.Cookie.Id = 0;
+                        }
                         dbCluster.SessionAffinity = cluster.SessionAffinity;
                     }
                     if (cluster.Metadata != null)
@@ -153,6 +178,20 @@ namespace ReverseProxy.Store.EFCore.Management
                 }
             }
         }
+
+        private async Task<Cluster> GetCluster(string id)
+        {
+            return await DbContext.Set<Cluster>()
+                    .Include(c => c.Metadata)
+                    .Include(c => c.Destinations)
+                    .Include(c => c.SessionAffinity).ThenInclude(s => s.Cookie)
+                    .Include(c => c.HttpRequest)
+                    .Include(c => c.HttpClient)
+                    .Include(c => c.HealthCheck).ThenInclude(h => h.Active)
+                    .Include(c => c.HealthCheck).ThenInclude(h => h.Passive)
+                    .FirstAsync(c => c.Id == id);
+        }
+
         private void ReloadConfig()
         {
             Task.Factory.StartNew(() => _reverseProxyStore.Reload());
