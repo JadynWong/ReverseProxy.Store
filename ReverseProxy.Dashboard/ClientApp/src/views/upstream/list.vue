@@ -148,7 +148,14 @@ export default {
     handleEdit(row) {
       row["_IsEdit"] = true;
       this.showClusterModal = true;
-      this.currentCluster = _.cloneDeep(row);
+      var clone = _.cloneDeep(row);
+      if (clone.httpRequest) {
+        clone.httpRequest.enabled = true;
+      }
+      if (clone.httpClient) {
+        clone.httpClient.enabled = true;
+      }
+      this.currentCluster = clone;
     },
     handleOpenCopy() {
       this.showCopyModal = true;
